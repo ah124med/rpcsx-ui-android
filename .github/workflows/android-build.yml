@@ -2,7 +2,7 @@
 # - Move librpcsx compilation away
 # - Do not use legacy CMake scripts (figure out how)
 
-name: Java CI with Gradle
+name: Android Build Alternative
 
 on:
   workflow_dispatch:

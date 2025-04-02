@@ -23,9 +23,6 @@ jobs:
         distribution: temurin
         java-version: 18
 
-    - name: Install packages
-      run: yes | sdkmanager "cmake;3.31.6"
-
     - name: Download RPCSX source code
       run: |
         cd ${{ github.workspace }}
@@ -50,6 +47,9 @@ jobs:
         key: ${{ runner.os }}-RPCSX-Android-${{ steps.version.outputs.hash }}
         restore-keys: |
             ${{ runner.os }}-RPCSX-Android-
+
+    - name: Install packages
+      run: yes | sdkmanager "cmake;3.31.6"
 
     #- name: Prepare environment
     #  run: |

@@ -1,78 +1,96 @@
-name: rpcsx-android-build
+# Todo List:
+# - Move librpcsx compilation away
+# - Do not use legacy CMake scripts (figure out how)
+
+name: Java CI with Gradle
 
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        type: choice
-        description: 'select branch to build(default: testing-dev)'
-        required: false
-        default: 'testing-dev'
-        options:
-        - testing-dev
-        
+      shouldrelease:
+          description: Create release
+          type: boolean
+      uploadbuild:
+          description: Upload build
+          type: boolean
+      releasetag:
+        description: Enter the tag name
+        type: string
+      releasetype:
+        description: Make it prerelease
+        type: boolean
+      islatest:
+        description: Mark as latest
+        type: boolean
 
 jobs:
-  rpcsx_android_build:
+  build:
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-    runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/setup-java@v4
+    - name: Checkout repo
+      uses: actions/checkout@v4
       with:
-        distribution: temurin
-        java-version: 18
+        submodules: recursive
 
-    - name: Download RPCSX source code
-      run: |
-        cd ${{ github.workspace }}
-        git clone --branch ${{ github.event.inputs.branch }} https://github.com/XEnjoyForYouX/rpcsx-ui-android.git --recursive
-        cd rpcsx-ui-android
-        
+    - name: Setup CCache
+      uses: hendrikmuhs/ccache-action@v1.2
 
-    - id: version
-      name: Get version
-      run: |
-        echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-        cd ${{ github.workspace }}/rpcsx-ui-android
-        echo "hash=$(git log -1 --pretty=format:%H)" >> $GITHUB_OUTPUT
-        echo "short_hash=$(git describe --always --long)" >> $GITHUB_OUTPUT
-        echo "version=$(git describe --tags --always)" >> $GITHUB_OUTPUT
-
-    - name: Set up cache
+    - name: Setup Gradle Cache
       uses: actions/cache@v4
       with:
         path: |
+          ~/.gradle/caches
           ~/.gradle/wrapper
-        key: ${{ runner.os }}-RPCSX-Android-${{ steps.version.outputs.hash }}
+        key: ${{ runner.os }}-android-${{ github.sha }}
         restore-keys: |
-            ${{ runner.os }}-RPCSX-Android-
+          ${{ runner.os }}-android-
+            
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: 17
+
+    - name: Decode Keystore
+      env:
+        KEYSTORE_ENCODED: ${{ secrets.KEYSTORE }}
+      run: | 
+        echo "$KEYSTORE_ENCODED" | base64 --decode > ${{ github.workspace }}/app/ks.jks
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
 
     - name: Install packages
       run: yes | sdkmanager "cmake;3.31.6"
 
-    #- name: Prepare environment
-    #  run: |
-    #    sudo apt-get install -y ninja-build
-    #      ln -s /usr/bin/ninja .
-    - name: Build Android
-      run: |
-        cd ${{ github.workspace }}/rpcsx-ui-android
-        chmod +x ./gradlew
-        ./gradlew "assembleRelease"
-        # bash gradlew build
-        mv $(find app/build/outputs/apk/release/* -type f | grep -E "\.apk$") ${{ github.workspace }}/RPCSX-Android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}.apk
+    - name: Build with Gradle
+      env: 
+        KEYSTORE_PATH: "ks.jks"
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+        CMAKE_C_COMPILER_LAUNCHER: "ccache"
+        CMAKE_CXX_COMPILER_LAUNCHER: "ccache"
+      run: ./gradlew assembleRelease
 
-    - name: Release RPCSX (RPCSX-Android)
-      uses: softprops/action-gh-release@v2
+    - name: Build release artifacts
+      uses: actions/upload-artifact@v4
+      if: ${{ github.event_name != 'workflow_dispatch' }} || ${{ inputs.uploadbuild }}
       with:
-        name: RCPSX ${{ steps.version.outputs.date }}
-        tag_name: RPCSX
-        files: ${{ github.workspace }}/RPCSX-Android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}.apk
+        name: rpcsx-build
+        path: |
+          app/build/outputs/apk/release/RPCSX-Android.apk
 
-    - name: Release RPCSX ${{ steps.version.outputs.date }}
+    - name: Create release
       uses: softprops/action-gh-release@v2
+      if: ${{ inputs.shouldrelease }}
       with:
-        name: ${{ steps.version.outputs.date }}
-        tag_name: ${{ steps.version.outputs.date }}
-        files: ${{ github.workspace }}/RPCSX-Android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}.apk
+        prerelease: ${{ inputs.releasetype }}
+        tag_name: ${{ inputs.releasetag }}
+        make_latest: ${{ inputs.islatest }}
+        # body: 'Some release text body if needed'
+        # body_path: or/as/file.md
+        files: |
+          app/build/outputs/apk/release/RPCSX-Android.apk

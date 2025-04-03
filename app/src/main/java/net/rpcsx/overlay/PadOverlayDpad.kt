@@ -63,6 +63,12 @@ class PadOverlayDpad(
     var idleAlpha: Int = 255
     var dragging: Boolean = false
 
+    var enabled: Boolean = prefs.getBoolean("${inputId}_enabled", true)
+        set(value) {
+            field = value
+            prefs.edit().putBoolean("${inputId}_enabled", value).apply()
+        }
+
     init {
         loadSavedPosition()
     }
@@ -138,8 +144,10 @@ class PadOverlayDpad(
         val x = prefs.getInt("${inputId}_x", area.left)
         val y = prefs.getInt("${inputId}_y", area.top)
         val scale = prefs.getInt("${inputId}_scale", -1)
+        val alpha = prefs.getInt("${inputId}_opacity", -1)
         updatePosition(x, y, force = true)
         if (scale != -1) setScale(scale)
+        if (alpha != -1) setOpacity(alpha)
     }
 
     fun measureDefaultScale(): Int {

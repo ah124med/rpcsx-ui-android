@@ -124,7 +124,7 @@ class PadOverlayDpad(
 
     fun setOpacity(percent: Int) {
         idleAlpha = (255 * percent / 100).coerceIn(0, 255)
-        prefs.edit().putInt("${inputId}_opacity", idleAlpha).apply()
+        prefs.edit().putInt("${inputId}_opacity", percent).apply()
     }
 
     fun resetConfigs() {

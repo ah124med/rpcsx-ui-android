@@ -321,17 +321,17 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
             
             val force =
                 action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP || action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_MOVE
-            if (force || dpad.contains(x, y)) {
+            if (force || (dpad.contains(x, y) && dpad.enabled)) {
                 hit = dpad.onTouch(motionEvent, pointerIndex, state)
             }
 
-            if (force || (!hit && triangleSquareCircleCross.contains(x, y))
+            if (force || (!hit && triangleSquareCircleCross.contains(x, y) && triangleSquareCircleCross.enabled)
             ) {
                 hit = triangleSquareCircleCross.onTouch(motionEvent, pointerIndex, state)
             }
 
             buttons.forEach { button ->
-                if (force || (!hit && button.contains(x, y))) {
+                if (force || (!hit && button.contains(x, y) && button.enabled)) {
                     hit = button.onTouch(motionEvent, pointerIndex, state)
                 }
             }

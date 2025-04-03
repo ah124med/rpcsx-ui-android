@@ -103,8 +103,8 @@ class PadOverlayButton(private val context: Context, resources: Resources, image
 
     fun measureDefaultScale(): Int {
         if (defaultSize.second <= 0 || defaultSize.first <= 0) return 100
-        val widthScale = defaultSize.second.toFloat() / intrinsicWidth * 100
-        val heightScale = defaultSize.first.toFloat() / intrinsicHeight * 100
+        val widthScale = defaultSize.second.toFloat() / 1024 * 100
+        val heightScale = defaultSize.first.toFloat() / 1024 * 100
         return minOf(widthScale, heightScale).roundToInt()
     }
 

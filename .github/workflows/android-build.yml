@@ -22,6 +22,13 @@ on:
       islatest:
         description: Mark as latest
         type: boolean
+      branch:
+        type: choice
+        description: 'select branch to build(default: testing-dev)'
+        required: false
+        default: 'testing-dev'
+        options:
+        - testing-dev
         
 jobs:
   build:
@@ -81,7 +88,7 @@ jobs:
       with:
         name: rpcsx-build
         path: |
-          app/build/outputs/apk/release/RPCSX-Android.apk
+          app/build/outputs/apk/release/rpcsx-release.apk
 
     - name: Create release
       uses: softprops/action-gh-release@v2
@@ -93,4 +100,4 @@ jobs:
         # body: 'Some release text body if needed'
         # body_path: or/as/file.md
         files: |
-          app/build/outputs/apk/release/RPCSX-Android.apk
+          app/build/outputs/apk/release/rpcsx-release.apk

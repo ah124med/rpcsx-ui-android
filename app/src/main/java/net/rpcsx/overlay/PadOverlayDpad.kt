@@ -157,7 +157,7 @@ class PadOverlayDpad(
     }
 
     fun getInfo(): Triple<String, Int, Int> {
-        return Triple("Dpad", prefs.getInt("${inputId}_scale", 50), prefs.getInt("${inputId}_scale", measureDefaultScale()))
+        return Triple("Dpad", prefs.getInt("${inputId}_scale", measureDefaultScale()), prefs.getInt("${inputId}_opacity", 50))
     }
 
     private fun updateBounds() {

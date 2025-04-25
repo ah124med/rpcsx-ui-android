@@ -82,15 +82,18 @@ class MainActivity : ComponentActivity() {
             RPCSX.nativeLibDirectory = nativeLibraryDir
 
             if (RPCSX.activeLibrary.value != null) {
+                RPCSX.instance.initialize(RPCSX.rootDirectory, UserRepository.getUserFromSettings())
+                val gpuDriverPath = GeneralSettings["gpu_driver_path"] as? String
+                val gpuDriverName = GeneralSettings["gpu_driver_name"] as? String
+
+                if (gpuDriverPath != null && gpuDriverName != null) {
+                    RPCSX.instance.setCustomDriver(gpuDriverPath, gpuDriverName, nativeLibraryDir)
+                }
+
                 lifecycleScope.launch {
                     UserRepository.load()
                 }
 
-                RPCSX.instance.initialize(RPCSX.rootDirectory, UserRepository.getUserFromSettings())
-                RPCSX.instance.settingsSet(
-                    "Video@@Vulkan@@Custom Driver@@Hook Directory",
-                    "\"" + nativeLibraryDir + "\""
-                )
                 RPCSX.initialized = true
 
                 thread {

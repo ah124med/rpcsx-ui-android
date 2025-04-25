@@ -349,7 +349,7 @@ fun GameItem(game: Game) {
 fun GamesScreen() {
     val context = LocalContext.current
     val games = remember { GameRepository.list() }
-    val isRefreshing = remember { mutableStateOf(false) }
+    val isRefreshing by remember { GameRepository.isRefreshing }
     val state = rememberPullToRefreshState()
     var uiUpdateVersion by remember { mutableStateOf<String?>(null) }
     var uiUpdate by remember { mutableStateOf(false) }
@@ -553,23 +553,18 @@ fun GamesScreen() {
     }
 
     PullToRefreshBox(
-        isRefreshing = isRefreshing.value,
+        isRefreshing = isRefreshing,
         state = state,
         onRefresh = {
-            if (gameInProgress == null) {
-                isRefreshing.value = true
-                thread {
-                    GameRepository.refresh()
-                    Thread.sleep(300)
-                    isRefreshing.value = false
-                }
+            if (gameInProgress == null && !isRefreshing) {
+                GameRepository.queueRefresh()
             }
         },
         indicator = {
             if (gameInProgress == null) {
                 PullToRefreshDefaults.Indicator(
                     state = state,
-                    isRefreshing = isRefreshing.value,
+                    isRefreshing = isRefreshing,
                     modifier = Modifier.align(Alignment.TopCenter),
                     color = MaterialTheme.colorScheme.onPrimary,
                     containerColor = MaterialTheme.colorScheme.primary

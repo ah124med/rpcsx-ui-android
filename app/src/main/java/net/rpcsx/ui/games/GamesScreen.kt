@@ -357,6 +357,7 @@ fun GamesScreen() {
     var uiUpdateProgressMax by remember { mutableLongStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
     val rpcsxLibrary by remember { RPCSX.activeLibrary }
+    var rpcsxInstallLibraryFailed by remember { mutableStateOf(false) }
     var rpcsxUpdateVersion by remember { mutableStateOf<String?>(null) }
     var rpcsxUpdate by remember { mutableStateOf(false) }
     var rpcsxUpdateProgressValue by remember { mutableLongStateOf(0) }
@@ -365,9 +366,17 @@ fun GamesScreen() {
 
     val gameInProgress = games.find { it.progressList.isNotEmpty() }
 
-    LaunchedEffect(Unit) {
-        uiUpdateVersion = UiUpdater.checkForUpdate(context)
+    val checkForUpdates = suspend {
         rpcsxUpdateVersion = RpcsxUpdater.checkForUpdate()
+        uiUpdateVersion = UiUpdater.checkForUpdate(context)
+
+        if (rpcsxUpdateVersion == null && rpcsxLibrary == null) {
+            rpcsxInstallLibraryFailed = true
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        checkForUpdates()
     }
 
     if (uiUpdateVersion != null && rpcsxUpdateVersion == null && activeDialogs.isEmpty()) {
@@ -448,6 +457,8 @@ fun GamesScreen() {
 
                 if (file != null) {
                     RpcsxUpdater.installUpdate(context, file)
+                } else if (rpcsxLibrary == null) {
+                    rpcsxInstallLibraryFailed = true
                 }
 
                 rpcsxUpdate = false
@@ -491,6 +502,48 @@ fun GamesScreen() {
                     }) {
                         Text("Update")
                     }
+                }
+            })
+    }
+
+    if (rpcsxInstallLibraryFailed) {
+        val installRpcsxLauncher =
+            rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
+                if (uri != null) {
+                    rpcsxInstallLibraryFailed = false
+
+                    val target = File(context.filesDir.canonicalPath, "librpcsx_unknown_unknown.so")
+                    if (target.exists()) {
+                        target.delete()
+                    }
+
+                    FileUtil.saveFile(context, uri, target.path)
+
+                    if (RPCSX.instance.getLibraryVersion(target.path) != null) {
+                        RpcsxUpdater.installUpdate(context, target)
+                    } else {
+                        rpcsxInstallLibraryFailed = true
+                    }
+                }
+            }
+
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Failed to download RPCSX") },
+            text = {},
+            confirmButton = {
+                TextButton(onClick = {
+                    rpcsxInstallLibraryFailed = false
+                    coroutineScope.launch { checkForUpdates() }
+                }) {
+                    Text("Retry")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    installRpcsxLauncher.launch("*/*")
+                }) {
+                    Text("Install custom version")
                 }
             })
     }

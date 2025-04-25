@@ -69,7 +69,7 @@ class OverlayEditActivity : ComponentActivity() {
     private fun enableFullScreenImmersive(activity: ComponentActivity) {
         val window = activity.window
         WindowCompat.setDecorFitsSystemWindows(window, false)
-
+    
         val insetsController = WindowInsetsControllerCompat(window, window.decorView)
         insetsController.apply {
             hide(WindowInsetsCompat.Type.systemBars())
@@ -161,18 +161,18 @@ fun OverlayEditScreen() {
         ) {
             ControlPanel(
                 scaleValue = scaleValue,
-                onScaleChange = {
-                    scaleValue = it
+                onScaleChange = { 
+                    scaleValue = it 
                     padOverlay?.setButtonScale(it.roundToInt())
                 },
                 opacityValue = opacityValue,
-                onOpacityChange = {
-                    opacityValue = it
+                onOpacityChange = { 
+                    opacityValue = it 
                     padOverlay?.setButtonOpacity(it.roundToInt())
                 },
                 isEnabled = isEnabled,
-                onEnableChange = {
-                    isEnabled = it
+                onEnableChange = { 
+                    isEnabled = it 
                     padOverlay?.enableButton(isEnabled)
                 },
                 currentButtonName = currentButtonName,
@@ -188,9 +188,9 @@ fun OverlayEditScreen() {
         if (showResetDialog) {
             ResetDialog(
                 buttonName = currentButtonName,
-                onConfirm = {
+                onConfirm = { 
                     showResetDialog = false
-                    padOverlay?.resetButtonConfigs()
+                    padOverlay?.resetButtonConfigs() 
                 },
                 onDismiss = { showResetDialog = false }
             )
@@ -220,14 +220,14 @@ fun ControlPanel(
 
     val panelWidth = 336f
     val panelHeight = 200f
-
-    var panelOffset by remember {
+    
+    var panelOffset by remember { 
         mutableStateOf(
             PointF(
-                (screenWidth / 2f - panelWidth / 2f),
+                (screenWidth / 2f - panelWidth / 2f), 
                 (screenHeight / 2f - panelHeight / 2f)
             )
-        )
+        ) 
     }
 
     Box(
@@ -273,7 +273,7 @@ fun ControlPanel(
                     .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), RoundedCornerShape(50))
             )
             Spacer(modifier = Modifier.height(5.dp))
-
+            
             Text(
                 text = "Editing: $currentButtonName",
                 style = MaterialTheme.typography.titleSmall,

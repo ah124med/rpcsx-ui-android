@@ -25,6 +25,7 @@ import net.rpcsx.RPCSX
 import net.rpcsx.utils.GeneralSettings
 import kotlin.math.min
 
+
 private const val idleAlpha = (0.3 * 255).toInt()
 
 data class State(
@@ -44,21 +45,16 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
     private val rightStick: PadOverlayStick
     private val floatingSticks = arrayOf<PadOverlayStick?>(null, null)
     private val sticks = mutableListOf<PadOverlayStick>()
-    private val prefs by lazy {
-        context!!.getSharedPreferences(
-            "PadOverlayPrefs",
-            Context.MODE_PRIVATE
-        )
-    }
+    private val prefs by lazy { context!!.getSharedPreferences("PadOverlayPrefs", Context.MODE_PRIVATE) }
     private var selectedInput: Any? = null
         set(value) {
             field = value
             onSelectedInputChange?.invoke(value)
         }
-
+        
     var onSelectedInputChange: ((Any?) -> Unit)? = null
     var isEditing = false
-
+    
     private val outlinePaint = Paint().apply {
         color = Color.RED
         style = Paint.Style.STROKE
@@ -109,7 +105,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
         val btnR1X = btnR2X
         val btnR1Y = btnR2Y + buttonSize + buttonSize / 2
 
-        val btnHomeX = totalWidth / 2 - buttonSize / 2
+        val btnHomeX = totalWidth / 2 -  buttonSize / 2
         val btnHomeY = btnStartY + (startSelectSize - buttonSize) / 2
 
         dpad = createDpad(
@@ -129,11 +125,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
         )
 
         triangleSquareCircleCross = createDpad(
-            "triangleSquareCircleCross",
-            btnAreaX - buttonSize / 2,
-            btnAreaY,
-            buttonSize * 3,
-            buttonSize * 3,
+            "triangleSquareCircleCross", btnAreaX - buttonSize / 2, btnAreaY, buttonSize * 3, buttonSize * 3,
             buttonSize,
             buttonSize,
             1,
@@ -304,9 +296,9 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                         }
                         if (!hit) {
                             selectedInput = null
+                            hit = true
                         }
                     }
-
                     MotionEvent.ACTION_MOVE -> {
                         buttons.forEach { button ->
                             if (button.dragging) {
@@ -323,7 +315,6 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                             hit = true
                         }
                     }
-
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                         buttons.forEach { button ->
                             button.stopDragging()
@@ -335,17 +326,14 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 if (hit) invalidate()
                 return@setOnTouchListener true
             }
-
+            
             val force =
                 action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP || action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_MOVE
             if (force || (dpad.contains(x, y) && dpad.enabled)) {
                 hit = dpad.onTouch(motionEvent, pointerIndex, state)
             }
 
-            if (force || (!hit && triangleSquareCircleCross.contains(
-                    x,
-                    y
-                ) && triangleSquareCircleCross.enabled)
+            if (force || (!hit && triangleSquareCircleCross.contains(x, y) && triangleSquareCircleCross.enabled)
             ) {
                 hit = triangleSquareCircleCross.onTouch(motionEvent, pointerIndex, state)
             }
@@ -355,10 +343,9 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                     hit = button.onTouch(motionEvent, pointerIndex, state)
                 }
             }
-
+        
             if (hit && GeneralSettings["haptic_feedback"] as Boolean? ?: true) {
-                val vm =
-                    context?.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                val vm = context?.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
                 vm?.defaultVibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
             }
 
@@ -435,28 +422,23 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
 
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
-        buttons.forEach { button ->
+        buttons.forEach { button -> 
             if (button.enabled)
-                button.draw(canvas)
+                button.draw(canvas) 
             else
                 createOutline(isEditing, button.bounds, canvas, yellowOutlinePaint)
         }
-
+        
         if (dpad.enabled)
             dpad.draw(canvas)
         else
             createOutline(isEditing, dpad.getBounds(), canvas, yellowOutlinePaint)
-
-        if (triangleSquareCircleCross.enabled)
+            
+        if (triangleSquareCircleCross.enabled) 
             triangleSquareCircleCross.draw(canvas)
         else
-            createOutline(
-                isEditing,
-                triangleSquareCircleCross.getBounds(),
-                canvas,
-                yellowOutlinePaint
-            )
-
+            createOutline(isEditing, triangleSquareCircleCross.getBounds(), canvas, yellowOutlinePaint)
+          
         sticks.forEach { it.draw(canvas) }
         floatingSticks.forEach { it?.draw(canvas) }
 
@@ -468,7 +450,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                     else -> throw IllegalArgumentException("unexpected selectedInput type")
                 }
 
-                bounds?.let {
+                bounds.let {
                     createOutline(true, it, canvas, outlinePaint)
                 }
             } else {
@@ -564,20 +546,20 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
 
     fun setButtonScale(value: Int) {
         (selectedInput as? PadOverlayDpad)?.setScale(value)
-            ?: (selectedInput as? PadOverlayButton)?.setScale(value)
+        ?: (selectedInput as? PadOverlayButton)?.setScale(value)
         invalidate()
     }
 
     fun setButtonOpacity(value: Int) {
         (selectedInput as? PadOverlayDpad)?.setOpacity(value)
-            ?: (selectedInput as? PadOverlayButton)?.setOpacity(value)
+        ?: (selectedInput as? PadOverlayButton)?.setOpacity(value)
         invalidate()
     }
 
     fun resetButtonConfigs() {
         if (selectedInput != null) {
             (selectedInput as? PadOverlayDpad)?.resetConfigs()
-                ?: (selectedInput as? PadOverlayButton)?.resetConfigs()
+            ?: (selectedInput as? PadOverlayButton)?.resetConfigs()
         } else {
             buttons.forEach { button -> button.resetConfigs() }
             dpad.resetConfigs()
@@ -592,7 +574,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 ?: (selectedInput as? PadOverlayButton)?.bounds
             if (bounds != null) {
                 (selectedInput as? PadOverlayDpad)?.updatePosition(bounds.left - 1, bounds.top, true)
-                    ?: (selectedInput as? PadOverlayButton)?.updatePosition(bounds.left - 1, bounds.top, true)
+                ?: (selectedInput as? PadOverlayButton)?.updatePosition(bounds.left - 1, bounds.top, true)
                 invalidate()
             }
         } else {
@@ -610,7 +592,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 ?: (selectedInput as? PadOverlayButton)?.bounds
             if (bounds != null) {
                 (selectedInput as? PadOverlayDpad)?.updatePosition(bounds.left + 1, bounds.top, true)
-                    ?: (selectedInput as? PadOverlayButton)?.updatePosition(bounds.left + 1, bounds.top, true)
+                ?: (selectedInput as? PadOverlayButton)?.updatePosition(bounds.left + 1, bounds.top, true)
                 invalidate()
             }
         } else {
@@ -628,7 +610,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 ?: (selectedInput as? PadOverlayButton)?.bounds
             if (bounds != null) {
                 (selectedInput as? PadOverlayDpad)?.updatePosition(bounds.left, bounds.top - 1, true)
-                    ?: (selectedInput as? PadOverlayButton)?.updatePosition(bounds.left, bounds.top - 1, true)
+                ?: (selectedInput as? PadOverlayButton)?.updatePosition(bounds.left, bounds.top - 1, true)
                 invalidate()
             }
         } else {
@@ -646,7 +628,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 ?: (selectedInput as? PadOverlayButton)?.bounds
             if (bounds != null) {
                 (selectedInput as? PadOverlayDpad)?.updatePosition(bounds.left, bounds.top + 1, true)
-                    ?: (selectedInput as? PadOverlayButton)?.updatePosition(bounds.left, bounds.top + 1, true)
+                ?: (selectedInput as? PadOverlayButton)?.updatePosition(bounds.left, bounds.top + 1, true)
                 invalidate()
             }
         } else {

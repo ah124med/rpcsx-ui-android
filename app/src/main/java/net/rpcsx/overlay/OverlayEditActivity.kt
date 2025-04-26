@@ -103,7 +103,7 @@ fun OverlayEditScreen() {
     var scaleValue by remember { mutableStateOf(50f) }
     var opacityValue by remember { mutableStateOf(100f) }
     var isEnabled by remember { mutableStateOf(true) }
-    var currentButtonName by remember { mutableStateOf("Unknown") }
+    var currentButtonName by remember { mutableStateOf("Everything") }
     var showResetDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var padOverlay: PadOverlay? by remember { mutableStateOf(null) }
@@ -125,15 +125,19 @@ fun OverlayEditScreen() {
         padOverlay?.isEditing = true
 
         padOverlay?.onSelectedInputChange = { input ->
-            val info = (input as? PadOverlayDpad)?.getInfo() ?: (input as? PadOverlayButton)?.getInfo()
-            if (info != null) {
-                currentButtonName = info.first.toString()
-                scaleValue = info.second.toFloat()
-                opacityValue = info.third.toFloat()
-            }
-            val inputEnabled = (input as? PadOverlayDpad)?.enabled ?: (input as? PadOverlayButton)?.enabled
-            if (inputEnabled != null) {
-                isEnabled = inputEnabled
+            if (input != null) {
+                val info = (input as? PadOverlayDpad)?.getInfo() ?: (input as? PadOverlayButton)?.getInfo()
+                if (info != null) {
+                    currentButtonName = info.first.toString()
+                    scaleValue = info.second.toFloat()
+                    opacityValue = info.third.toFloat()
+                }
+                val inputEnabled = (input as? PadOverlayDpad)?.enabled ?: (input as? PadOverlayButton)?.enabled
+                if (inputEnabled != null) {
+                    isEnabled = inputEnabled
+                }
+            } else {
+                currentButtonName = "Everything"
             }
         }
 
@@ -248,14 +252,14 @@ fun ControlPanel(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = {}, modifier = Modifier.alpha(0f)) {
-		    Icon(Icons.Default.Close, contentDescription = "Disabled Button")
+                    Icon(Icons.Default.Close, contentDescription = "Disabled Button")
                 }
                 Text(
                     text = "Control Panel",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.titleLarge,
-		    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 IconButton(onClick = onCloseClick) {
                     Icon(Icons.Default.Close, contentDescription = "Close", tint = MaterialTheme.colorScheme.error)
@@ -301,7 +305,8 @@ fun ControlPanel(
                     }
 
                     Checkbox(
-                        checked = isEnabled,
+                        checked = currentButtonName == "Everything" || isEnabled,
+                        enabled = currentButtonName != "Everything",
                         onCheckedChange = onEnableChange,
                         modifier = Modifier.padding(4.dp),
                         colors = CheckboxDefaults.colors(
@@ -333,9 +338,11 @@ fun ControlPanel(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    SliderComponent("Scale", scaleValue, onScaleChange)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    SliderComponent("Opacity", opacityValue, onOpacityChange)
+                    if (currentButtonName != "Everything") {
+                        SliderComponent("Scale", scaleValue, onScaleChange)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        SliderComponent("Opacity", opacityValue, onOpacityChange)
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -375,10 +382,11 @@ fun SliderComponent(label: String, value: Float, onValueChange: (Float) -> Unit)
 
 @Composable
 fun ResetDialog(buttonName: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    val toBeReset = if (buttonName == "Everything") "everything" else "this button"
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(text = "Reset $buttonName") },
-        text = { Text(text = "Are you sure you want to reset this button?") },
+        text = { Text(text = "Are you sure you want to reset ${toBeReset}?") },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(text = "Confirm")

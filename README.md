@@ -2,7 +2,7 @@
 
 # RPCSX-UI-Android
 
-*An experimental native Android native UI for RPCSX emulator*
+*An experimental Android native UI for RPCSX emulator*
 
 [![](https://img.shields.io/discord/252023769500090368?color=5865F2&logo=discord&logoColor=white)](https://discord.gg/t6dzA4wUdG)
 
@@ -17,7 +17,7 @@ If you want to contribute as a developer, please contact us in the [Discord](htt
 
 ## Requirements
 
-Android 12+
+Android 10+
 
 
 ## License

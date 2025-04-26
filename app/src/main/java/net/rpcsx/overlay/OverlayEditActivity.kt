@@ -28,6 +28,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
@@ -46,6 +48,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.viewinterop.AndroidView
 import net.rpcsx.RPCSXTheme
 import net.rpcsx.R
@@ -224,7 +228,7 @@ fun ControlPanel(
 
     Box(
         modifier = Modifier
-            .offset(panelOffset.x.dp, panelOffset.y.dp)
+            .offset { IntOffset(panelOffset.x.toInt(), panelOffset.y.toInt()) }
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.88f), RoundedCornerShape(8.dp))
             .padding(10.dp)
             .width(336.dp)
@@ -243,17 +247,27 @@ fun ControlPanel(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(4.dp)
-                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), RoundedCornerShape(50))
+                IconButton(onClick = {}, modifier = Modifier.alpha(0f)) {
+		    Icon(Icons.Default.Close, contentDescription = "Disabled Button")
+                }
+                Text(
+                    text = "Control Panel",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleLarge,
+		    color = MaterialTheme.colorScheme.onSurface
                 )
                 IconButton(onClick = onCloseClick) {
                     Icon(Icons.Default.Close, contentDescription = "Close", tint = MaterialTheme.colorScheme.error)
                 }
             }
 
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.dp)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), RoundedCornerShape(50))
+            )
             Spacer(modifier = Modifier.height(5.dp))
             
             Text(
@@ -280,7 +294,7 @@ fun ControlPanel(
                 ) {
                     IconButton(onClick = onMoveLeft) {
                         Icon(
-                            imageVector = Icons.Default.KeyboardArrowLeft,
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                             contentDescription = "Move Left",
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -298,7 +312,7 @@ fun ControlPanel(
 
                     IconButton(onClick = onMoveRight) {
                         Icon(
-                            imageVector = Icons.Default.KeyboardArrowRight,
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                             contentDescription = "Move Right",
                             tint = MaterialTheme.colorScheme.primary
                         )

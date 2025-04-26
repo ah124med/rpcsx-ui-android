@@ -8,19 +8,22 @@ plugins {
 
 android {
     namespace = "net.rpcsx"
-    compileSdk = 35
+    compileSdk = 36
+    ndkVersion = "29.0.13113456"
 
     defaultConfig {
         applicationId = "net.rpcsx"
-        minSdk = 31
+        minSdk = 29
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        versionName = "${System.getenv("RX_VERSION") ?: "local"}${if (System.getenv("RX_SHA") != null) "-" + System.getenv("RX_SHA") else ""}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters += listOf("arm64-v8a" /*, "x86_64" */)
         }
+
+        buildConfigField("String", "Version", "\"v${versionName}\"")
     }
 
     signingConfigs {
@@ -94,6 +97,7 @@ android {
     buildFeatures {
         viewBinding = true
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -126,10 +130,5 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.coil.compose)
-    implementation("io.ktor:ktor-client-core:3.0.3")
-    implementation("io.ktor:ktor-client-cio:3.0.3")
-    implementation("io.ktor:ktor-client-json:3.0.3")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.3")
-    implementation("io.ktor:ktor-client-content-negotiation:3.0.3")
-    implementation("io.ktor:ktor-client-logging:3.0.3")
+    implementation(libs.squareup.okhttp3)
 }

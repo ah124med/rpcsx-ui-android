@@ -70,7 +70,9 @@ enum class BootResult
 };
 
 class RPCSX {
-    external fun initialize(rootDir: String): Boolean
+    external fun openLibrary(path: String): Boolean
+    external fun getLibraryVersion(path: String): String?
+    external fun initialize(rootDir: String, user: String): Boolean
     external fun installFw(fd: Int, progressId: Long): Boolean
     external fun install(fd: Int, progressId: Long): Boolean
     external fun installKey(fd: Int, requestId: Long, gamePath: String): Boolean
@@ -88,19 +90,25 @@ class RPCSX {
     external fun kill()
     external fun resume()
     external fun openHomeMenu()
+    external fun loginUser(userId: String)
+    external fun getUser(): String
     external fun getTitleId(): String
     external fun supportsCustomDriverLoading() : Boolean
     external fun isInstallableFile(fd: Int) : Boolean
     external fun getDirInstallPath(sfoFd: Int) : String?
-//    external fun forceMaxGpuClocks(enable : Boolean)
+    external fun getVersion(): String
+    external fun setCustomDriver(path: String, libraryName: String, hookDir: String): Boolean
 
 
     companion object {
         var initialized = false
         val instance = RPCSX()
-        var rootDirectory: String = ""
+        var rootDirectory = ""
+        var nativeLibDirectory = ""
+        var lastPlayedGame = ""
         var activeGame = mutableStateOf<String?>(null)
         var state = mutableStateOf(EmulatorState.Stopped)
+        var activeLibrary = mutableStateOf<String?>(null)
 
         fun boot(path: String): BootResult {
             return BootResult.fromInt(instance.boot(path))
@@ -116,6 +124,19 @@ class RPCSX {
         fun getState(): EmulatorState {
             updateState()
             return state.value
+        }
+
+        fun getHdd0Dir(): String {
+            return rootDirectory + "config/dev_hdd0/"
+        }
+
+        fun openLibrary(path: String): Boolean {
+            if (!instance.openLibrary(path)) {
+                return false
+            }
+
+            activeLibrary.value = path
+            return true
         }
 
         init {

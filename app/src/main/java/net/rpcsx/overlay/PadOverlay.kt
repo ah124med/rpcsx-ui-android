@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.VibrationEffect
 import android.os.VibratorManager
 import android.os.Vibrator
+import android.os.Handler
+import android.os.Looper
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -12,7 +14,9 @@ import android.graphics.Rect
 import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.VectorDrawable
+import android.animation.ObjectAnimator
 import android.util.AttributeSet
+import android.view.View
 import android.view.MotionEvent
 import android.view.SurfaceView
 import androidx.core.content.ContextCompat
@@ -54,6 +58,14 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
         
     var onSelectedInputChange: ((Any) -> Unit)? = null
     var isEditing = false
+
+    private var fadeHandler: Handler? = null
+    private var fadeRunnable: Runnable? = null
+    private var isOverlayVisible = true
+    private var lastTouchTime = System.currentTimeMillis()
+
+    private val fadeDuration = 500L
+    private val fadeTimeout = 10_000L
     
     private val outlinePaint = Paint().apply {
         color = Color.RED
@@ -268,6 +280,14 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
         setOnTouchListener { _, motionEvent ->
             var hit = false
 
+            if (!isEditing) {
+                lastTouchTime = System.currentTimeMillis()
+                resetFadeTimer()
+                if (!isOverlayVisible) {
+                    fadeInOverlay()
+                }
+            }
+
             val action = motionEvent.actionMasked
             val pointerIndex =
                 if (action == MotionEvent.ACTION_POINTER_DOWN || action == MotionEvent.ACTION_POINTER_UP) motionEvent.actionIndex else 0
@@ -414,6 +434,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
 
             hit || performClick()
         }
+        if (!isEditing) resetFadeTimer()
     }
 
     override fun draw(canvas: Canvas) {
@@ -530,6 +551,33 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
         val alpha = GeneralSettings["${inputId}_opacity"] as Int? ?: -1
         result.setOpacity(if (alpha != -1) alpha else 50)
         return result
+    }
+
+    private fun resetFadeTimer() {
+        fadeHandler?.removeCallbacks(fadeRunnable!!)
+        fadeHandler = Handler(Looper.getMainLooper())
+        fadeRunnable = Runnable {
+            fadeOutOverlay()
+        }
+        fadeHandler?.postDelayed(fadeRunnable!!, fadeTimeout)
+    }
+
+    private fun fadeOutOverlay() {
+        if (!isOverlayVisible) return
+        isOverlayVisible = false
+        ObjectAnimator.ofFloat(this, "alpha", 1f, 0f).apply {
+            duration = fadeDuration
+            start()
+        }
+    }
+
+    private fun fadeInOverlay() {
+        if (isOverlayVisible) return
+        isOverlayVisible = true
+        ObjectAnimator.ofFloat(this, "alpha", 0f, 1f).apply {
+            duration = fadeDuration
+            start()
+        }
     }
 
     fun setButtonScale(value: Int) {

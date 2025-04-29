@@ -14,7 +14,7 @@ on:
           - Draft
           - RC
           - Release
-          - Pre-Alpha
+          - PreAlpha
         default: Draft
       releaseTagVersion:
         description: Release tag version
@@ -28,7 +28,7 @@ jobs:
       contents: write
     env:
       RX_VERSION: "Unknown"
-      RX_TAG: ${{ inputs.releaseTag == 'Release' && 2 || inputs.releaseTag == 'RC' && 2 || inputs.releaseTag == 'Pre-Alpha' && 2 || 0 }}
+      RX_TAG: ${{ inputs.releaseTag == 'Release' && 2 || inputs.releaseTag == 'RC' && 2 || inputs.releaseTag == 'PreAlpha' && 2 || 0 }}
       RX_TAG_VERSION: ${{ inputs.releaseTagVersion }}
 
     steps:

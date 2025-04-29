@@ -65,7 +65,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
     private var lastTouchTime = System.currentTimeMillis()
 
     private val fadeDuration = 500L
-    private val fadeTimeout = 10_000L
+    private val fadeTimeout = 19_000L
     
     private val outlinePaint = Paint().apply {
         color = Color.RED

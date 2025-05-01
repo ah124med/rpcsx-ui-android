@@ -103,7 +103,7 @@ class PadOverlayDpad(
         dragging = false
     }
 
-    fun setScale(percent: Int) {
+    override fun setScale(percent: Int) {
         val scaleFactor = percent / 100f
         val newWidth = (1024 * scaleFactor).roundToInt()
         val newHeight = (1024 * scaleFactor).roundToInt()
@@ -129,7 +129,7 @@ class PadOverlayDpad(
         GeneralSettings.setValue("${inputId}_scale", percent)
     }
 
-    fun setOpacity(percent: Int) {
+    override fun setOpacity(percent: Int) {
         idleAlpha = (255 * percent / 100).coerceIn(0, 255)
         GeneralSettings.setValue("${inputId}_opacity", percent)
     }
@@ -199,7 +199,7 @@ class PadOverlayDpad(
         )
     }
 
-    fun onTouch(event: MotionEvent, pointerIndex: Int, padState: State): Boolean {
+    override fun onTouch(event: MotionEvent, pointerIndex: Int, padState: State): Boolean {
         val action = event.actionMasked
         var hit = false
 

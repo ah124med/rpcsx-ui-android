@@ -42,13 +42,16 @@ data class State(
     var rightStickY: Int = 127
 )
 interface PadOverlayItem {
-    fun bounds(): Rect
     fun draw(canvas: Canvas)
     fun updatePosition(x: Int, y: Int, force: Boolean = false)
-    fun resetConfigs()
     fun startDragging(x: Int, y: Int)
-    fun contains(x: Int, y: Int): Boolean
     fun stopDragging()
+    fun setScale(percent: Int)
+    fun setOpacity(percent: Int)
+    fun resetConfigs()
+    fun onTouch(event: MotionEvent, pointerIndex: Int, padState: State): Boolean
+    fun contains(x: Int, y: Int): Boolean
+    fun bounds(): Rect
     var dragging: Boolean
     var enabled: Boolean
 }
@@ -354,18 +357,10 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
             
             val force =
                 action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP || action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_MOVE
-            if (force || (dpad.contains(x, y) && dpad.enabled)) {
-                hit = dpad.onTouch(motionEvent, pointerIndex, state)
-            }
 
-            if (force || (!hit && triangleSquareCircleCross.contains(x, y) && triangleSquareCircleCross.enabled)
-            ) {
-                hit = triangleSquareCircleCross.onTouch(motionEvent, pointerIndex, state)
-            }
-
-            buttons.forEach { button ->
-                if (force || (!hit && button.contains(x, y) && button.enabled)) {
-                    hit = button.onTouch(motionEvent, pointerIndex, state)
+            editables.forEach { editable ->
+                if (force || (!hit && editable.contains(x, y) && editable.enabled)) {
+                    hit = editable.onTouch(motionEvent, pointerIndex, state)
                 }
             }
         
@@ -447,33 +442,18 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
 
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
-        buttons.forEach { button -> 
-            if (button.enabled)
-                button.draw(canvas) 
+        editables.forEach { editable ->
+            if (editable.enabled)
+                editable.draw(canvas)
             else
-                createOutline(isEditing, button.bounds, canvas, yellowOutlinePaint)
+                createOutline(isEditing, editable.bounds(), canvas, yellowOutlinePaint)
         }
-        
-        if (dpad.enabled)
-            dpad.draw(canvas)
-        else
-            createOutline(isEditing, dpad.bounds(), canvas, yellowOutlinePaint)
-            
-        if (triangleSquareCircleCross.enabled) 
-            triangleSquareCircleCross.draw(canvas)
-        else
-            createOutline(isEditing, triangleSquareCircleCross.bounds(), canvas, yellowOutlinePaint)
-          
         sticks.forEach { it.draw(canvas) }
         floatingSticks.forEach { it?.draw(canvas) }
 
         if (isEditing) {
             if (selectedInput != null) {
-                val bounds = selectedInput!!.bounds()
-
-                bounds.let {
-                    createOutline(true, it, canvas, outlinePaint)
-                }
+                createOutline(true, selectedInput!!.bounds(), canvas, outlinePaint)
             } else {
                 editables.forEach { editable ->
                     createOutline(true, editable.bounds(), canvas, outlinePaint)
@@ -592,14 +572,12 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
     }
 
     fun setButtonScale(value: Int) {
-        (selectedInput as? PadOverlayDpad)?.setScale(value)
-        ?: (selectedInput as? PadOverlayButton)?.setScale(value)
+        selectedInput!!.setScale(value)
         invalidate()
     }
 
     fun setButtonOpacity(value: Int) {
-        (selectedInput as? PadOverlayDpad)?.setOpacity(value)
-        ?: (selectedInput as? PadOverlayButton)?.setOpacity(value)
+        selectedInput!!.setOpacity(value)
         invalidate()
     }
 

@@ -31,7 +31,7 @@ class PadOverlayButton(resources: Resources, image: Bitmap, private val inputId:
     
     override fun contains(x: Int, y: Int) = bounds.contains(x, y)
 
-    fun onTouch(event: MotionEvent, pointerIndex: Int, padState: State): Boolean {
+    override fun onTouch(event: MotionEvent, pointerIndex: Int, padState: State): Boolean {
         val action = event.actionMasked
         var hit = false
         if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN) {
@@ -85,7 +85,7 @@ class PadOverlayButton(resources: Resources, image: Bitmap, private val inputId:
         dragging = false
     }
 
-    fun setScale(percent: Int) {
+    override fun setScale(percent: Int) {
         scaleFactor = percent / 100f
         val newWidth = (1024 * scaleFactor).roundToInt()
         val newHeight = (1024 * scaleFactor).roundToInt()
@@ -93,7 +93,7 @@ class PadOverlayButton(resources: Resources, image: Bitmap, private val inputId:
         GeneralSettings.setValue("button_${digital1}_${digital2}_scale", percent)
     }
 
-    fun setOpacity(percent: Int) {
+    override fun setOpacity(percent: Int) {
         opacity = (255 * (percent / 100f)).roundToInt()
         alpha = opacity
         GeneralSettings.setValue("button_${digital1}_${digital2}_opacity", percent)

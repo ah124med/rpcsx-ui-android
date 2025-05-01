@@ -152,7 +152,7 @@ class PadOverlayDpad(
 
         val x = GeneralSettings["${inputId}_x"].int(area.left)
         val y = GeneralSettings["${inputId}_y"].int(area.top)
-        updatePosition(x, y, force = true)
+        updatePosition(x, y, true)
     }
 
     private fun measureDefaultScale(): Int {

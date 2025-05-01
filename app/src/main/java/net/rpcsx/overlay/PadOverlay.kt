@@ -44,9 +44,9 @@ data class State(
 interface PadOverlayItem {
     fun bounds(): Rect
     fun draw(canvas: Canvas)
-    fun updatePosition(x: Int, y: Int, force: Boolean = true)
+    fun updatePosition(x: Int, y: Int, force: Boolean = false)
     fun resetConfigs()
-    fun  startDragging(x: Int, y: Int)
+    fun startDragging(x: Int, y: Int)
     fun contains(x: Int, y: Int): Boolean
     fun stopDragging()
     var dragging: Boolean

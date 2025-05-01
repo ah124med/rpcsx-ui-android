@@ -46,7 +46,7 @@ class PadOverlayDpad(
     imgBottom: Bitmap,
     private val bottomBit: Int,
     private val multitouch: Boolean
-) {
+) : PadOverlayItem {
     private val originalButtonWidth = buttonWidth
     private val originalButtonHeight = buttonHeight
     private val drawableTop = imgTop.toDrawable(resources)
@@ -64,9 +64,9 @@ class PadOverlayDpad(
     private val defaultButtonWidth = buttonWidth
     private val defaultButtonHeight = buttonHeight
     var idleAlpha: Int = 255
-    var dragging: Boolean = false
+    override var dragging: Boolean = false
 
-    var enabled: Boolean = GeneralSettings["${inputId}_enabled"].boolean(true)
+    override var enabled: Boolean = GeneralSettings["${inputId}_enabled"].boolean(true)
         set(value) {
             field = value
             GeneralSettings.setValue("${inputId}_enabled", value)
@@ -76,15 +76,15 @@ class PadOverlayDpad(
         loadSavedPosition()
     }
 
-    fun contains(x: Int, y: Int) = area.contains(x, y)
+    override fun contains(x: Int, y: Int) = area.contains(x, y)
 
-    fun startDragging(x: Int, y: Int) {
+    override fun startDragging(x: Int, y: Int) {
         dragging = true
         offsetX = x - area.left
         offsetY = y - area.top
     }
 
-    fun updatePosition(x: Int, y: Int, force: Boolean = false) {
+    override fun updatePosition(x: Int, y: Int, force: Boolean) {
         if (!dragging && !force) return
 
         val newLeft = if (!force) x - offsetX else x
@@ -99,7 +99,7 @@ class PadOverlayDpad(
         GeneralSettings.setValue("${inputId}_y", area.top)
     }
 
-    fun stopDragging() {
+    override fun stopDragging() {
         dragging = false
     }
 
@@ -134,7 +134,7 @@ class PadOverlayDpad(
         GeneralSettings.setValue("${inputId}_opacity", percent)
     }
 
-    fun resetConfigs() {
+    override fun resetConfigs() {
         GeneralSettings.setValue("${inputId}_x", null)
         GeneralSettings.setValue("${inputId}_y", null)
         GeneralSettings.setValue("${inputId}_scale", null)
@@ -163,7 +163,7 @@ class PadOverlayDpad(
 
     fun getInfo(): Triple<String, Int, Int> {
         return Triple(
-            "Dpad", 
+            inputId,
             GeneralSettings["${inputId}_scale"].int(measureDefaultScale()), 
             GeneralSettings["${inputId}_opacity"].int(50)
         )
@@ -296,11 +296,9 @@ class PadOverlayDpad(
         )
     }
 
-    fun getBounds(): Rect {
-        return area
-    }
+    override fun bounds(): Rect = area
 
-    fun draw(canvas: Canvas) {
+    override fun draw(canvas: Canvas) {
         drawableLeft.alpha =
             if (btnState[0].isActive(DpadButton.Left) || btnState[1].isActive(DpadButton.Left)) 255 else idleAlpha
         drawableLeft.draw(canvas)

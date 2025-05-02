@@ -163,7 +163,7 @@ class PadOverlayDpad(
 
     fun getInfo(): Triple<String, Int, Int> {
         return Triple(
-            inputId,
+            if (inputId == "dpad") "Directional Pad" else "Face Buttons",
             GeneralSettings["${inputId}_scale"].int(measureDefaultScale()), 
             GeneralSettings["${inputId}_opacity"].int(50)
         )

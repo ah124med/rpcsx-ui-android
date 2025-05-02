@@ -6,11 +6,13 @@ import android.graphics.Canvas
 import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.view.MotionEvent
+import net.rpcsx.Digital1Flags
 import kotlin.math.roundToInt
 import net.rpcsx.utils.GeneralSettings
 import net.rpcsx.utils.GeneralSettings.boolean
+import net.rpcsx.utils.InputBindingPrefs
 
-class PadOverlayButton(resources: Resources, image: Bitmap, private val inputId: String, private val digital1: Int, private val digital2: Int) : PadOverlayItem, BitmapDrawable(resources, image) {
+class PadOverlayButton(resources: Resources, image: Bitmap, private val digital1: Int, private val digital2: Int) : PadOverlayItem, BitmapDrawable(resources, image) {
     private var pressed = false
     private var locked = -1
     private var origAlpha = alpha
@@ -116,6 +118,7 @@ class PadOverlayButton(resources: Resources, image: Bitmap, private val inputId:
     }
 
     fun getInfo(): Triple<String, Int, Int> {
-        return Triple(inputId, GeneralSettings["button_${digital1}_${digital2}_scale"] as Int? ?: measureDefaultScale(), GeneralSettings["button_${digital1}_${digital2}_opacity"] as Int? ?: 50)
+        val dn = if (digital1 == Digital1Flags.None.ordinal) 1 else 0
+        return Triple(InputBindingPrefs.rpcsxKeyCodeToString(if (dn == 0) digital1 else digital2, dn), GeneralSettings["button_${digital1}_${digital2}_scale"] as Int? ?: measureDefaultScale(), GeneralSettings["button_${digital1}_${digital2}_opacity"] as Int? ?: 50)
     }
 }

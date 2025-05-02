@@ -44,7 +44,7 @@ data class State(
 interface PadOverlayItem {
     fun draw(canvas: Canvas)
     fun updatePosition(x: Int, y: Int, force: Boolean = false)
-    fun startDragging(x: Int, y: Int)
+    fun startDragging(startX: Int, startY: Int)
     fun stopDragging()
     fun setScale(percent: Int)
     fun setOpacity(percent: Int)
@@ -230,7 +230,6 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
 
         buttons = arrayOf(
             createButton(
-                "Start",
                 R.drawable.start,
                 btnStartX,
                 btnStartY,
@@ -240,7 +239,6 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 Digital2Flags.None
             ),
             createButton(
-                "Select",
                 R.drawable.select,
                 btnSelectX,
                 btnSelectY,
@@ -251,7 +249,6 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
             ),
 
             createButton(
-                "Mode",
                 R.drawable.ic_rpcsx_foreground,
                 btnHomeX,
                 btnHomeY,
@@ -261,7 +258,6 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 Digital2Flags.None
             ),
             createButton(
-                "L1",
                 R.drawable.l1,
                 btnL1X,
                 btnL1Y,
@@ -271,7 +267,6 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 Digital2Flags.CELL_PAD_CTRL_L1
             ),
             createButton(
-                "L2",
                 R.drawable.l2,
                 btnL2X,
                 btnL2Y,
@@ -281,7 +276,6 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 Digital2Flags.CELL_PAD_CTRL_L2
             ),
             createButton(
-                "R1",
                 R.drawable.r1,
                 btnR1X,
                 btnR1Y,
@@ -291,7 +285,6 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 Digital2Flags.CELL_PAD_CTRL_R1
             ),
             createButton(
-                "R2",
                 R.drawable.r2,
                 btnR2X,
                 btnR2Y,
@@ -486,7 +479,6 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
     }
 
     private fun createButton(
-        inputId: String,
         resourceId: Int,
         x: Int,
         y: Int,
@@ -497,7 +489,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
     ): PadOverlayButton {
         val resources = context!!.resources
         val bitmap = getBitmap(resourceId, width, height)
-        val result = PadOverlayButton(resources, bitmap, inputId, digital1.bit, digital2.bit)
+        val result = PadOverlayButton(resources, bitmap, digital1.bit, digital2.bit)
         val scale = GeneralSettings["button_${digital1.bit}_${digital2.bit}_scale"].int(0)
         val alpha = GeneralSettings["button_${digital1.bit}_${digital2.bit}_opacity"].int(50)
         val savedX = GeneralSettings["button_${digital1.bit}_${digital2.bit}_x"].int(x)

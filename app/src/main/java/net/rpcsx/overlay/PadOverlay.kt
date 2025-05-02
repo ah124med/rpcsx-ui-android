@@ -41,11 +41,25 @@ data class State(
     var rightStickX: Int = 127,
     var rightStickY: Int = 127
 )
-
+interface PadOverlayItem {
+    fun draw(canvas: Canvas)
+    fun updatePosition(x: Int, y: Int, force: Boolean = false)
+    fun startDragging(x: Int, y: Int)
+    fun stopDragging()
+    fun setScale(percent: Int)
+    fun setOpacity(percent: Int)
+    fun resetConfigs()
+    fun onTouch(event: MotionEvent, pointerIndex: Int, padState: State): Boolean
+    fun contains(x: Int, y: Int): Boolean
+    fun bounds(): Rect
+    var dragging: Boolean
+    var enabled: Boolean
+}
 class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context, attrs) {
     private val buttons: Array<PadOverlayButton>
     private val dpad: PadOverlayDpad
     private val triangleSquareCircleCross: PadOverlayDpad
+    private val editables: Array<PadOverlayItem>
     private val state = State()
     private val leftStick: PadOverlayStick
     private val rightStick: PadOverlayStick
@@ -57,7 +71,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
             (context?.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager)?.defaultVibrator 
         else context?.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator 
     }
-    private var selectedInput: Any? = null
+    private var selectedInput: PadOverlayItem? = null
         set(value) {
             field = value
             onSelectedInputChange?.invoke(value)
@@ -216,6 +230,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
 
         buttons = arrayOf(
             createButton(
+                "Start",
                 R.drawable.start,
                 btnStartX,
                 btnStartY,
@@ -225,6 +240,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 Digital2Flags.None
             ),
             createButton(
+                "Select",
                 R.drawable.select,
                 btnSelectX,
                 btnSelectY,
@@ -235,6 +251,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
             ),
 
             createButton(
+                "Mode",
                 R.drawable.ic_rpcsx_foreground,
                 btnHomeX,
                 btnHomeY,
@@ -244,6 +261,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 Digital2Flags.None
             ),
             createButton(
+                "L1",
                 R.drawable.l1,
                 btnL1X,
                 btnL1Y,
@@ -253,6 +271,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 Digital2Flags.CELL_PAD_CTRL_L1
             ),
             createButton(
+                "L2",
                 R.drawable.l2,
                 btnL2X,
                 btnL2Y,
@@ -262,6 +281,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 Digital2Flags.CELL_PAD_CTRL_L2
             ),
             createButton(
+                "R1",
                 R.drawable.r1,
                 btnR1X,
                 btnR1Y,
@@ -271,6 +291,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 Digital2Flags.CELL_PAD_CTRL_R1
             ),
             createButton(
+                "R2",
                 R.drawable.r2,
                 btnR2X,
                 btnR2Y,
@@ -280,7 +301,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                 Digital2Flags.CELL_PAD_CTRL_R2
             ),
         )
-
+        editables = arrayOf(*buttons, dpad, triangleSquareCircleCross)
         setWillNotDraw(false)
         requestFocus()
 
@@ -304,22 +325,12 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
             if (isEditing) {
                 when (action) {
                     MotionEvent.ACTION_DOWN -> {
-                        buttons.forEach { button ->
-                            if (button.contains(x, y)) {
-                                selectedInput = button
-                                button.startDragging(x, y)
+                        editables.forEach { editable ->
+                            if (editable.contains(x, y)) {
+                                selectedInput = editable
+                                editable.startDragging(x, y)
                                 hit = true
                             }
-                        }
-                        if (dpad.contains(x, y)) {
-                            selectedInput = dpad
-                            dpad.startDragging(x, y)
-                            hit = true
-                        }
-                        if (triangleSquareCircleCross.contains(x, y)) {
-                            selectedInput = triangleSquareCircleCross
-                            triangleSquareCircleCross.startDragging(x, y)
-                            hit = true
                         }
                         if (!hit) {
                             selectedInput = null
@@ -327,27 +338,17 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
                         }
                     }
                     MotionEvent.ACTION_MOVE -> {
-                        buttons.forEach { button ->
-                            if (button.dragging) {
-                                button.updatePosition(x, y)
+                        editables.forEach { editable ->
+                            if (editable.dragging) {
+                                editable.updatePosition(x, y)
                                 hit = true
                             }
                         }
-                        if (dpad.dragging) {
-                            dpad.updatePosition(x, y)
-                            hit = true
-                        }
-                        if (triangleSquareCircleCross.contains(x, y)) {
-                            triangleSquareCircleCross.updatePosition(x, y)
-                            hit = true
-                        }
                     }
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        buttons.forEach { button ->
-                            button.stopDragging()
+                        editables.forEach { editable ->
+                            editable.stopDragging()
                         }
-                        dpad.stopDragging()
-                        triangleSquareCircleCross.stopDragging()
                     }
                 }
                 if (hit) invalidate()
@@ -356,18 +357,10 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
             
             val force =
                 action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP || action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_MOVE
-            if (force || (dpad.contains(x, y) && dpad.enabled)) {
-                hit = dpad.onTouch(motionEvent, pointerIndex, state)
-            }
 
-            if (force || (!hit && triangleSquareCircleCross.contains(x, y) && triangleSquareCircleCross.enabled)
-            ) {
-                hit = triangleSquareCircleCross.onTouch(motionEvent, pointerIndex, state)
-            }
-
-            buttons.forEach { button ->
-                if (force || (!hit && button.contains(x, y) && button.enabled)) {
-                    hit = button.onTouch(motionEvent, pointerIndex, state)
+            editables.forEach { editable ->
+                if (force || (!hit && editable.contains(x, y) && editable.enabled)) {
+                    hit = editable.onTouch(motionEvent, pointerIndex, state)
                 }
             }
         
@@ -449,43 +442,22 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
 
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
-        buttons.forEach { button -> 
-            if (button.enabled)
-                button.draw(canvas) 
+        editables.forEach { editable ->
+            if (editable.enabled)
+                editable.draw(canvas)
             else
-                createOutline(isEditing, button.bounds, canvas, yellowOutlinePaint)
+                createOutline(isEditing, editable.bounds(), canvas, yellowOutlinePaint)
         }
-        
-        if (dpad.enabled)
-            dpad.draw(canvas)
-        else
-            createOutline(isEditing, dpad.getBounds(), canvas, yellowOutlinePaint)
-            
-        if (triangleSquareCircleCross.enabled) 
-            triangleSquareCircleCross.draw(canvas)
-        else
-            createOutline(isEditing, triangleSquareCircleCross.getBounds(), canvas, yellowOutlinePaint)
-          
         sticks.forEach { it.draw(canvas) }
         floatingSticks.forEach { it?.draw(canvas) }
 
         if (isEditing) {
             if (selectedInput != null) {
-                val bounds = when (selectedInput) {
-                    is PadOverlayButton -> (selectedInput as PadOverlayButton).bounds
-                    is PadOverlayDpad -> (selectedInput as PadOverlayDpad).getBounds()
-                    else -> throw IllegalArgumentException("unexpected selectedInput type")
-                }
-
-                bounds.let {
-                    createOutline(true, it, canvas, outlinePaint)
-                }
+                createOutline(true, selectedInput!!.bounds(), canvas, outlinePaint)
             } else {
-                buttons.forEach { button ->
-                    createOutline(true, button.bounds, canvas, outlinePaint)
+                editables.forEach { editable ->
+                    createOutline(true, editable.bounds(), canvas, outlinePaint)
                 }
-                createOutline(true, dpad.getBounds(), canvas, outlinePaint)
-                createOutline(true, triangleSquareCircleCross.getBounds(), canvas, outlinePaint)
             }
         }
     }
@@ -514,6 +486,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
     }
 
     private fun createButton(
+        inputId: String,
         resourceId: Int,
         x: Int,
         y: Int,
@@ -524,7 +497,7 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
     ): PadOverlayButton {
         val resources = context!!.resources
         val bitmap = getBitmap(resourceId, width, height)
-        val result = PadOverlayButton(resources, bitmap, digital1.bit, digital2.bit)
+        val result = PadOverlayButton(resources, bitmap, inputId, digital1.bit, digital2.bit)
         val scale = GeneralSettings["button_${digital1.bit}_${digital2.bit}_scale"].int(0)
         val alpha = GeneralSettings["button_${digital1.bit}_${digital2.bit}_opacity"].int(50)
         val savedX = GeneralSettings["button_${digital1.bit}_${digital2.bit}_x"].int(x)
@@ -599,107 +572,70 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
     }
 
     fun setButtonScale(value: Int) {
-        (selectedInput as? PadOverlayDpad)?.setScale(value)
-        ?: (selectedInput as? PadOverlayButton)?.setScale(value)
+        selectedInput!!.setScale(value)
         invalidate()
     }
 
     fun setButtonOpacity(value: Int) {
-        (selectedInput as? PadOverlayDpad)?.setOpacity(value)
-        ?: (selectedInput as? PadOverlayButton)?.setOpacity(value)
+        selectedInput!!.setOpacity(value)
         invalidate()
     }
 
     fun resetButtonConfigs() {
         if (selectedInput != null) {
-            (selectedInput as? PadOverlayDpad)?.resetConfigs()
-            ?: (selectedInput as? PadOverlayButton)?.resetConfigs()
+            selectedInput!!.resetConfigs()
         } else {
-            buttons.forEach { button -> button.resetConfigs() }
-            dpad.resetConfigs()
-            triangleSquareCircleCross.resetConfigs()
+            editables.forEach { editable -> editable.resetConfigs() }
         }
         invalidate()
     }
 
     fun moveButtonLeft() {
         if (selectedInput != null) {
-            val bounds = (selectedInput as? PadOverlayDpad)?.getBounds()
-                ?: (selectedInput as? PadOverlayButton)?.bounds
-            if (bounds != null) {
-                (selectedInput as? PadOverlayDpad)?.updatePosition(bounds.left - 1, bounds.top, true)
-                ?: (selectedInput as? PadOverlayButton)?.updatePosition(bounds.left - 1, bounds.top, true)
-                invalidate()
-            }
+            val bounds = selectedInput!!.bounds()
+            selectedInput!!.updatePosition(bounds.left - 1, bounds.top, true)
         } else {
-            buttons.forEach { button -> selectedInput = button; moveButtonLeft() }
-            selectedInput = dpad; moveButtonLeft()
-            selectedInput = triangleSquareCircleCross; moveButtonLeft()
+            editables.forEach { editable -> selectedInput = editable; moveButtonLeft() }
             selectedInput = null
-            invalidate()
         }
+        invalidate()
     }
 
     fun moveButtonRight() {
         if (selectedInput != null) {
-            val bounds = (selectedInput as? PadOverlayDpad)?.getBounds()
-                ?: (selectedInput as? PadOverlayButton)?.bounds
-            if (bounds != null) {
-                (selectedInput as? PadOverlayDpad)?.updatePosition(bounds.left + 1, bounds.top, true)
-                ?: (selectedInput as? PadOverlayButton)?.updatePosition(bounds.left + 1, bounds.top, true)
-                invalidate()
-            }
+            val bounds = selectedInput!!.bounds()
+            selectedInput!!.updatePosition(bounds.left + 1, bounds.top, true)
         } else {
-            buttons.forEach { button -> selectedInput = button; moveButtonRight() }
-            selectedInput = dpad; moveButtonRight()
-            selectedInput = triangleSquareCircleCross; moveButtonRight()
+            editables.forEach { editable -> selectedInput = editable; moveButtonRight() }
             selectedInput = null
-            invalidate()
         }
+        invalidate()
     }
 
     fun moveButtonUp() {
         if (selectedInput != null) {
-            val bounds = (selectedInput as? PadOverlayDpad)?.getBounds()
-                ?: (selectedInput as? PadOverlayButton)?.bounds
-            if (bounds != null) {
-                (selectedInput as? PadOverlayDpad)?.updatePosition(bounds.left, bounds.top - 1, true)
-                ?: (selectedInput as? PadOverlayButton)?.updatePosition(bounds.left, bounds.top - 1, true)
-                invalidate()
-            }
+            val bounds = selectedInput!!.bounds()
+            selectedInput!!.updatePosition(bounds.left, bounds.top - 1, true)
         } else {
-            buttons.forEach { button -> selectedInput = button; moveButtonUp() }
-            selectedInput = dpad; moveButtonUp()
-            selectedInput = triangleSquareCircleCross; moveButtonUp()
+            editables.forEach { editable -> selectedInput = editable; moveButtonUp() }
             selectedInput = null
-            invalidate()
         }
+        invalidate()
     }
 
     fun moveButtonDown() {
         if (selectedInput !== null) {
-            val bounds = (selectedInput as? PadOverlayDpad)?.getBounds()
-                ?: (selectedInput as? PadOverlayButton)?.bounds
-            if (bounds != null) {
-                (selectedInput as? PadOverlayDpad)?.updatePosition(bounds.left, bounds.top + 1, true)
-                ?: (selectedInput as? PadOverlayButton)?.updatePosition(bounds.left, bounds.top + 1, true)
-                invalidate()
-            }
+            val bounds = selectedInput!!.bounds()
+            selectedInput!!.updatePosition(bounds.left, bounds.top + 1, true)
         } else {
-            buttons.forEach { button -> selectedInput = button; moveButtonDown() }
-            selectedInput = dpad; moveButtonDown()
-            selectedInput = triangleSquareCircleCross; moveButtonDown()
+            editables.forEach { editable -> selectedInput = editable; moveButtonDown() }
             selectedInput = null
-            invalidate()
         }
+        invalidate()
     }
 
     fun enableButton(value: Boolean) {
-        if (selectedInput is PadOverlayDpad) {
-            (selectedInput as PadOverlayDpad).enabled = value
-        } else if (selectedInput is PadOverlayButton) {
-            (selectedInput as PadOverlayButton).enabled = value
-        }
+        selectedInput!!.enabled = value //null means enable checkbox is disabled, shouldn't be called when null
         invalidate()
     }
 }

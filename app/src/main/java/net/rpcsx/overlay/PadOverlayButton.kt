@@ -2,33 +2,36 @@ package net.rpcsx.overlay
 
 import android.content.res.Resources
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.view.MotionEvent
 import kotlin.math.roundToInt
 import net.rpcsx.utils.GeneralSettings
 import net.rpcsx.utils.GeneralSettings.boolean
 
-class PadOverlayButton(resources: Resources, image: Bitmap, private val digital1: Int, private val digital2: Int) : BitmapDrawable(resources, image) {
+class PadOverlayButton(resources: Resources, image: Bitmap, private val inputId: String, private val digital1: Int, private val digital2: Int) : PadOverlayItem, BitmapDrawable(resources, image) {
     private var pressed = false
     private var locked = -1
     private var origAlpha = alpha
-    var dragging = false
+    override var dragging = false
     private var offsetX = 0
     private var offsetY = 0
     private var scaleFactor = 0.5f
     private var opacity = alpha
     var defaultSize: Pair<Int, Int> = Pair(-1, -1)
     lateinit var defaultPosition: Pair<Int, Int>
-
-    var enabled: Boolean = GeneralSettings["button_${digital1}_${digital2}_enabled"].boolean(true)
+    override fun bounds(): Rect = bounds
+    override fun draw(canvas: Canvas) = super.draw(canvas)
+    override var enabled: Boolean = GeneralSettings["button_${digital1}_${digital2}_enabled"].boolean(true)
         set(value) {
             field = value
             GeneralSettings.setValue("button_${digital1}_${digital2}_enabled", value)
         }
     
-    fun contains(x: Int, y: Int) = bounds.contains(x, y)
+    override fun contains(x: Int, y: Int) = bounds.contains(x, y)
 
-    fun onTouch(event: MotionEvent, pointerIndex: Int, padState: State): Boolean {
+    override fun onTouch(event: MotionEvent, pointerIndex: Int, padState: State): Boolean {
         val action = event.actionMasked
         var hit = false
         if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN) {
@@ -59,13 +62,13 @@ class PadOverlayButton(resources: Resources, image: Bitmap, private val digital1
         return hit
     }
 
-    fun startDragging(startX: Int, startY: Int) {
+    override fun startDragging(startX: Int, startY: Int) {
         dragging = true
         offsetX = startX - bounds.left
         offsetY = startY - bounds.top
     }
 
-    fun updatePosition(x: Int, y: Int, force: Boolean = false) {
+    override fun updatePosition(x: Int, y: Int, force: Boolean) {
         if (dragging) {
             setBounds(x - offsetX, y - offsetY, x - offsetX + bounds.width(), y - offsetY + bounds.height())
             GeneralSettings.setValue("button_${digital1}_${digital2}_x", x - offsetX)
@@ -78,11 +81,11 @@ class PadOverlayButton(resources: Resources, image: Bitmap, private val digital1
         }
     }
 
-    fun stopDragging() {
+    override fun stopDragging() {
         dragging = false
     }
 
-    fun setScale(percent: Int) {
+    override fun setScale(percent: Int) {
         scaleFactor = percent / 100f
         val newWidth = (1024 * scaleFactor).roundToInt()
         val newHeight = (1024 * scaleFactor).roundToInt()
@@ -90,7 +93,7 @@ class PadOverlayButton(resources: Resources, image: Bitmap, private val digital1
         GeneralSettings.setValue("button_${digital1}_${digital2}_scale", percent)
     }
 
-    fun setOpacity(percent: Int) {
+    override fun setOpacity(percent: Int) {
         opacity = (255 * (percent / 100f)).roundToInt()
         alpha = opacity
         GeneralSettings.setValue("button_${digital1}_${digital2}_opacity", percent)
@@ -103,7 +106,7 @@ class PadOverlayButton(resources: Resources, image: Bitmap, private val digital1
         return minOf(widthScale, heightScale).roundToInt()
     }
 
-    fun resetConfigs() {
+    override fun resetConfigs() {
         setOpacity(50)
         setBounds(defaultPosition.first, defaultPosition.second, defaultPosition.first + defaultSize.second, defaultPosition.second + defaultSize.first)
         GeneralSettings.setValue("button_${digital1}_${digital2}_scale", null)
@@ -113,6 +116,6 @@ class PadOverlayButton(resources: Resources, image: Bitmap, private val digital1
     }
 
     fun getInfo(): Triple<String, Int, Int> {
-        return Triple("${digital1}_${digital2}", GeneralSettings["button_${digital1}_${digital2}_scale"] as Int? ?: measureDefaultScale(), GeneralSettings["button_${digital1}_${digital2}_opacity"] as Int? ?: 50)
+        return Triple(inputId, GeneralSettings["button_${digital1}_${digital2}_scale"] as Int? ?: measureDefaultScale(), GeneralSettings["button_${digital1}_${digital2}_opacity"] as Int? ?: 50)
     }
 }

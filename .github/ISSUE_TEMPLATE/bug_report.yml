@@ -15,7 +15,7 @@ body:
     id: stepstoreproducebug
     attributes:
       label: Steps to reproduce the behavior
-      value: |
+      placeholder: |
         - 1. Go to '...'
         - 2. Click on '....'
         - 3. Scroll down to '....'
@@ -36,10 +36,10 @@ body:
     id: phonespecs
     attributes:
       label: Smartphone (please complete the following information)
-      value: |
+      placeholder: |
         - Device: [e.g. Pixel 32 Pro]
         - OS: [e.g. OneUI 21]
-        - Version [e.g. v2.1.0]
+        - Version: [e.g. v2.1.0]
     validations:
       required: true
 

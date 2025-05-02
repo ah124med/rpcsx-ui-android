@@ -437,7 +437,6 @@ class PadOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context,
 
             hit || performClick()
         }
-        if (!isEditing) resetFadeTimer()
     }
 
     override fun draw(canvas: Canvas) {

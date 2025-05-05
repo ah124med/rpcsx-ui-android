@@ -317,6 +317,5 @@ Java_net_rpcsx_RPCSX_setCustomDriver(JNIEnv *env, jobject, jstring jpath,
   if (prevLoader != nullptr) {
     ::dlclose(prevLoader);
   }
-
   return true;
 }

@@ -316,6 +316,37 @@ Java_net_rpcsx_RPCSX_setCustomDriver(JNIEnv *env, jobject, jstring jpath,
   if (prevLoader != nullptr) {
     ::dlclose(prevLoader);
   }
+#include <jni.h>
+#include <android/log.h>
+#include <android/native_window_jni.h>
+#include <vulkan/vulkan.h>
 
+#define LOG_TAG "RPCSX"
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+// Called by Java to initialize the emulator
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_rpcsx_MainActivity_nativeInit(JNIEnv *env, jobject /* this */, jobject surface) {
+    ANativeWindow* window = ANativeWindow_fromSurface(env, surface);
+    if (!window) {
+        LOGE("Failed to get ANativeWindow from surface");
+        return;
+    }
+
+    // TODO: Initialize Vulkan with ANativeWindow
+    // e.g., create VkSurfaceKHR and begin rendering
+
+    LOGI("Native initialization complete.");
+}
+
+// Called to shut down emulator
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_rpcsx_MainActivity_nativeShutdown(JNIEnv *, jobject) {
+    // TODO: Cleanup Vulkan and emulator
+    LOGI("Native shutdown.");
+}
   return true;
 }

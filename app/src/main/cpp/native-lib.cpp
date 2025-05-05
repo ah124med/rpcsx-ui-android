@@ -111,5 +111,3 @@ bool createLogicalDevice() {
     vkGetDeviceQueue(device, graphicsFamily, 0, &graphicsQueue);
     return true;
 }
-  return true;
-}

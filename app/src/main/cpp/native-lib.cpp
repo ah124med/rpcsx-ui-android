@@ -10,17 +10,14 @@
 #ifdef __ANDROID__
 #include <sched.h>
 #include <unistd.h>
-#endif
 
 void set_high_performance_core() {
 #ifdef __ANDROID__
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     // Set to use big cores only (e.g., CPU 4–7 on Snapdragon)
-    for (int i = 1; i < 8; i++) CPU_SET(i, &cpuset);
+    for (int i = 4; i < 8; i++) CPU_SET(i, &cpuset);
     sched_setaffinity(0, sizeof(cpuset), &cpuset);
-#endif
-}
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -38,10 +35,8 @@ Java_com_example_rpcsx_NativeBridge_init(JNIEnv* env, jobject /* this */) {
         LOGI("RPCSX initialization failed");
         return;
     }
-
     LOGI("RPCSX initialized on high-performance core.");
 }
-
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_example_rpcsx_NativeBridge_runFrame(JNIEnv* env, jobject /* this */) {

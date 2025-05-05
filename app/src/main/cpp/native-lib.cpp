@@ -9,6 +9,7 @@
 #include <sys/resource.h>
 #include <unistd.h>
 #include <utility>
+#include <vulkan.h>
 
 #if defined(__aarch64__)
 #include <adrenotools/driver.h>

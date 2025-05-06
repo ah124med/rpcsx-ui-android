@@ -11,7 +11,7 @@
 #include <sched.h>
 #include <unistd.h>
 
-void set_high_performance_core() {
+#void set_high_performance_core()
 #ifdef __ANDROID__
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);

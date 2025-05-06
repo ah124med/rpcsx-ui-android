@@ -12,6 +12,9 @@ endif()
 
 add_library(${CMAKE_PROJECT_NAME} SHARED native-lib.cpp)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -march=armv8.2-a+fp16 -mtune=cortex-a78 -mfpu=neon")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=armv8.2-a+fp16 -mtune=cortex-a78 -mfpu=neon")
+
 target_link_libraries(${CMAKE_PROJECT_NAME}
     android
     log

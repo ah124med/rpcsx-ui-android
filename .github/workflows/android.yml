@@ -34,7 +34,6 @@ jobs:
 
     - name: Build with Gradle
       run: ./gradlew assembleDebug
-
     - name: Build Debug APK
       run: ./gradlew assembleDebug --stacktrace --info --no-daemon
 

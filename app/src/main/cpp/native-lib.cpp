@@ -9,7 +9,48 @@
 #include <sys/resource.h>
 #include <unistd.h>
 #include <utility>
+#include <jni.h>
+#include <android/log.h>
+#include "rpcs3/rpcs3.h" // Adjust this include path as needed
+#include "Utilities/Thread.h"
 
+#define LOG_TAG "native-lib"
+#define ALOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
+#define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+// Cache JVM references
+static JavaVM* g_vm = nullptr;
+static jobject g_activity = nullptr;
+
+extern "C" jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+    g_vm = vm;
+    return JNI_VERSION_1_6;
+}
+
+extern "C" void Java_com_example_rpcsx_NativeBridge_init(JNIEnv* env, jobject activity) {
+    if (!g_activity) {
+        g_activity = env->NewGlobalRef(activity);
+    }
+
+    ALOGV("Initializing RPCSX...");
+    rpcsx::initialize();
+
+    // Optionally create a separate rendering thread
+    thread::create([]() {
+        ALOGV("Starting render loop...");
+        rpcsx::start_render_loop(); // hypothetical function
+    });
+}
+
+extern "C" void Java_com_example_rpcsx_NativeBridge_shutdown(JNIEnv* env, jobject thiz) {
+    ALOGV("Shutting down RPCSX...");
+    rpcsx::shutdown();
+
+    if (g_activity) {
+        env->DeleteGlobalRef(g_activity);
+        g_activity = nullptr;
+    }
+}
 #if defined(__aarch64__)
 #include <adrenotools/driver.h>
 #include <adrenotools/priv.h>
